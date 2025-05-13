@@ -67,4 +67,108 @@ Naive DQN 在 Random 模式下表現不佳，主要原因可歸結為環境變�
 
 ### 小結
 
-本報告實驗結果顯示，Naive DQN 在靜態（Static）環境下可以學習到一定程度的策略，但面對隨機（Random）環境時表現不佳。引入經驗回放緩衝區和目標網絡後，DQN 的訓練穩定性顯著提高，在隨機環境中的性能也大幅提升。經驗回放提供了更多樣化的訓練樣本並去除了連續樣本間的相關性，目標網絡則通過固定目標值大幅降低了估計的震盪。這些技術是深度強化學習成功應用的關鍵因素。實驗過程中，我們深刻體會到穩定學習機制對 DQN 收斂的重要性。未來可以嘗試引入其他改良技術（如 Double DQN、Dueling DQN 等）來進一步提升模型在更複雜隨機環境下的表現和收斂速度。
+本報告實驗結果顯示，Naive DQN 在靜態（Static）環境下可以學習到一定程度的策略，但面對隨機（Random）環境時表現不佳。引入經驗回放緩衝區和目標網絡後，DQN 的訓練穩定性顯著提高，在隨機環境中的性能也大幅提升。經驗回放提供了更多樣化的訓練樣本並去除了連續樣本間的相關性，目標網絡則通過固定目標值大幅降低了估計的震盪。這些技術是深度強化學習成功應用的關鍵因素。實驗過程中，我們深刻體會到穩定學習機制對 DQN 收斂的重要性。
+
+# HW 4.1
+# 強化學習報告：Double DQN 與 Dueling DQN 的比較分析
+
+## 實驗目標
+本次實驗旨在比較改良版深度 Q 網絡（DQN）架構──**Double DQN** 與 **Dueling DQN**──在三種環境模式（Static、Player、Random）下的學習表現，並探討這些方法如何改善基本 Naive DQN 的缺陷。
+
+本次實驗未引入經驗回放（Experience Replay）、目標網路（Target Network）等輔助技術，單純觀察網路結構上的影響。
+
+---
+
+## 實作方法
+
+### Double DQN（DDQN）
+Double DQN 為了解決基本 DQN 過度估計 Q 值的問題，將「動作選擇」與「動作評估」分離：  
+- 使用主網絡（online network）選擇最佳動作 \( a^* = \arg\max_a Q(s', a; \theta) \)
+- 使用目標網絡（target network）評估該動作的 Q 值  
+這樣能有效減少高估 Q 值的風險，提升學習的穩定性與準確性。
+
+### Dueling DQN
+Dueling DQN 將 Q 值函數拆解為：
+- 狀態的價值函數 \( V(s) \)
+- 動作的優勢函數 \( A(s, a) \)
+
+網路結構中採用兩條分支分別估計 \( V \) 與 \( A \)，最終合併為：
+\[ Q(s, a) = V(s) + \left( A(s, a) - \frac{1}{|\mathcal{A}|} \sum_{a'} A(s, a') \right) \]
+
+此結構允許網路在某些狀態下更聚焦於「估計該狀態好壞」，而不是每次都強調每個動作的比較，特別適用於某些狀態下動作選擇差異性小的情境。
+
+---
+
+## 實驗結果與觀察
+
+### 模式一：Static 模式
+
+- Double DQN 與 Dueling DQN 均展現穩定的收斂特性，最終表現明顯優於基本 DQN。
+- 表現幾乎無震盪，累積獎勵穩定上升。
+  
+**Double DQN in Static mode**
+
+ ![image](https://github.com/user-attachments/assets/26930a1f-88cb-466d-bfc0-76b5366f6152)
+
+**Dueling DQN in Static mode**
+
+![image](https://github.com/user-attachments/assets/1fd7e304-a589-407b-94f5-4e03c2735f10)
+
+---
+
+### 模式二：Player 模式
+
+- 兩種架構在與 Player 對抗時仍能學到有效策略，顯示其在策略選擇與價值評估上具備良好的泛化能力。
+- Dueling DQN 表現略勝一籌，推測其能更好地學習「狀態本身」的價值，面對變化較大的玩家行為時，策略選擇較具韌性。
+
+**Double DQN in Player mode**
+
+![image](https://github.com/user-attachments/assets/81154ac8-cd08-4e34-84ef-11ce1018659e)
+
+
+**Dueling DQN in Player mode**
+
+![image](https://github.com/user-attachments/assets/0617d91b-dbc0-4e0e-8884-3ada9a0b9b57)
+
+---
+
+### 模式三：Random 模式
+
+- 無論是 Double DQN 或 Dueling DQN，皆無法在 Random 模式下學習有效策略，表現明顯下降。
+- 可能原因：
+  - 初始狀態與對手策略完全隨機，導致樣本分布變異性大。
+  - 本實驗未引入經驗回放與目標網路，使得網路難以從非穩定樣本中提取穩定策略。
+  - Dueling 結構對狀態價值評估依賴明確特徵，而在隨機初始與對手策略中，這些特徵難以穩定學到。
+
+ **Double DQN in Random mode**
+ 
+ ![image](https://github.com/user-attachments/assets/9a6a382f-bfb4-4e07-b367-7d24cecc67e5)
+
+ 
+ **Dueling DQN in Random mode**
+ 
+ ![image](https://github.com/user-attachments/assets/37a28879-13d7-4e94-9552-2ba67e0a823c)
+
+---
+
+## 綜合比較與推測
+
+| 模式        | Double DQN 表現 | Dueling DQN 表現 | 備註                       |
+|-------------|------------------|------------------|----------------------------|
+| Static      | 穩定收斂         | 穩定收斂         | 效果佳，提升明顯          |
+| Player      | 穩定收斂         | 最佳表現         | Dueling 更具彈性與泛化能力 |
+| Random      | 效果極差         | 效果極差         | 結構改良不足以克服隨機性   |
+
+推測原因總結如下：
+
+1. **結構改良雖提升學習品質，但需配合穩定機制（如經驗回放與目標網絡）才能應對非平穩環境。**
+2. **Double DQN 能減少高估，但無法應對樣本分布劇烈變動。**
+3. **Dueling DQN 雖能更好提取狀態價值，但在初始狀態與對手策略完全隨機的情境下，難以穩定聚焦學習方向。**
+
+---
+
+## 小結
+
+本次實驗證實：**Double DQN 與 Dueling DQN 在結構上明確改善了基本 DQN 的估計偏差與策略泛化能力**，特別是在 Static 與 Player 模式中，均展現優秀的穩定性與最終表現。然而，**單靠網路結構的改進，仍無法克服高度隨機環境帶來的訓練不穩定性**。
+
+
