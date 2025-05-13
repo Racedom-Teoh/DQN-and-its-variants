@@ -69,7 +69,7 @@ Naive DQN 在 Random 模式下表現不佳，主要原因可歸結為環境變�
 
 本報告實驗結果顯示，Naive DQN 在靜態（Static）環境下可以學習到一定程度的策略，但面對隨機（Random）環境時表現不佳。引入經驗回放緩衝區和目標網絡後，DQN 的訓練穩定性顯著提高，在隨機環境中的性能也大幅提升。經驗回放提供了更多樣化的訓練樣本並去除了連續樣本間的相關性，目標網絡則通過固定目標值大幅降低了估計的震盪。這些技術是深度強化學習成功應用的關鍵因素。實驗過程中，我們深刻體會到穩定學習機制對 DQN 收斂的重要性。
 
-# HW 4.1
+# HW 4.2
 # 強化學習報告：Double DQN 與 Dueling DQN 的比較分析
 
 ## 實驗目標
@@ -170,5 +170,106 @@ Dueling DQN 將 Q 值函數拆解為：
 ## 小結
 
 本次實驗證實：**Double DQN 與 Dueling DQN 在結構上明確改善了基本 DQN 的估計偏差與策略泛化能力**，特別是在 Static 與 Player 模式中，均展現優秀的穩定性與最終表現。然而，**單靠網路結構的改進，仍無法克服高度隨機環境帶來的訓練不穩定性**。
+
+
+# HW 4.3
+## 強化學習報告：Dueling DQN in PyTorch Lightning 與進階訓練技巧於 Random 模式下的表現
+
+### 實驗目標
+本次實驗針對先前在 Random 模式下表現不佳的情況，嘗試使用 **PyTorch Lightning 架構重構 Dueling DQN**，並逐步引入多項強化學習穩定訓練技巧，以觀察在高隨機性環境中是否能顯著提升學習效果與模型表現。
+---
+
+## 實作流程與調整歷程
+
+### 1. 使用 PyTorch Lightning 改寫 Dueling DQN
+- 初步將原始的 Dueling DQN 轉換為 PyTorch Lightning 架構。
+- 模型組織更清晰，訓練與驗證流程分離，方便後續擴充訓練技巧。
+
+> 🔍 觀察：  
+結果與原本 PyTorch 寫法幾乎一致，Random 模式下仍無法有效學習，Loss 未收斂，勝率低迷。
+> 
+# Dueling DQN in PyTorch (Random Mode)
+
+![image](https://github.com/user-attachments/assets/9028abeb-a8e2-475a-981f-8effa25d2704)
+
+
+
+# Dueling DQN in PyTorch Lightning (Random Mode)
+
+![image](https://github.com/user-attachments/assets/4cd69771-8c84-472d-83dd-0518a214c87e)
+
+
+
+---
+
+### 2. 整合多項強化學習技巧（Random 模式）
+
+組合模型結構與訓練技巧如下：
+
+- ✅ **Dueling DQN**
+- ✅ **Double DQN**：避免 Q 值過度高估
+- ✅ **Target Network**：穩定訓練目標
+- ✅ **Experience Replay Buffer**：減少樣本相關性
+- ✅ **Epsilon-Greedy 探索策略（指數衰減）**：鼓勵初期探索，後期收斂
+- ✅ **PyTorch Lightning 架構重構**
+
+> 🔍 觀察：  
+加入上述技術後，訓練誤差開始穩定下降，並成功收斂至 loss 小於 5.
+
+# DuelingDQN + Target Network + Double DQN + Experience Replay Buffer + Epsilon-Greedy (指數衰減) in PyTorch Lightning (Random Mode)
+
+![image](https://github.com/user-attachments/assets/f1847258-e1dd-43d9-ae31-bc9d8f1efc6c)
+
+---
+
+### 3. 引入「防撞牆」機制（Anti-wall collision reward shaping）
+
+為進一步強化在隨機對手下的策略學習，加入如下設計：
+- 若 agent 撞牆，立即給予 -10 獎勵
+- 促使 agent 學習避開無效或危險行動
+
+> 🔍 最終結果：
+- **Loss 降至 0.1 以下**
+- **1000 局平均勝率高達 98.5%**
+- 動作決策穩定，不易撞牆或做出無效選擇
+- 學習策略高度泛化，能快速適應對手與初始隨機變動
+
+# 引入防撞牆機制後的 loss 收斂圖
+
+![image](https://github.com/user-attachments/assets/7d839774-79fb-4d05-901a-9af27d1a0217)
+
+# 勝率達 98.5% 的對局統計圖 
+
+![image](https://github.com/user-attachments/assets/61597840-9d43-4130-83c3-cd78f2ed7088)
+
+
+## 技術總結與分析
+
+| 技術             | 影響評估                         |
+|------------------|----------------------------------|
+| PyTorch Lightning | 架構清晰、便於擴展與調試         |
+| Double DQN        | 避免高估 Q 值，提升穩定性         |
+| Dueling DQN       | 加強對狀態價值的估計能力         |
+| Target Network    | 降低目標漂移，提升收斂速度       |
+| Experience Replay | 減少資料相依性，提高樣本效率     |
+| Epsilon-Greedy    | 初期探索，後期穩定策略            |
+| 防撞牆機制        | 避免 agent 採取無效甚至有害動作   |
+
+> 推測成功關鍵：
+> - 原始結構與隨機環境不匹配，導致策略無法穩定學習  
+> - 多項技術聯合使用，有效解決策略不穩、過估、訓練震盪等問題  
+> - 特別是 reward shaping 有效導引策略方向，是突破瓶頸的重要關鍵
+---
+
+## 結論與心得
+
+透過本次實驗，我們證明在高隨機性環境中（如 Random 模式），**單靠網路結構改良仍不足以學得穩定策略**。然而，**若結合多種訓練技巧與 reward shaping，模型將能展現強大的適應性與學習效率**。
+
+✅ **最終模型（Dueling + Double DQN + Target Net + Replay Buffer + Reward shaping ）不僅 Loss 收斂良好，亦能在 1000 局中達成 98.5% 的勝率，展現高度穩定與策略有效性。**
+
+本次作業亦讓我深入體會 PyTorch Lightning 的架構設計優勢，特別適合模組化強化學習訓練與技巧整合。
+
+---
+
 
 
