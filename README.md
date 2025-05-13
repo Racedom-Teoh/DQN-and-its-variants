@@ -23,27 +23,39 @@ Naive DQN 基於深度 Q 學習，在每個時間步使用神經網絡估計各�
 
 Naive DQN 在 **Static 模式**和 **Player 模式**下的學習曲線與最終表現如圖所示。在 Static 模式中，初始狀態固定，原始 Naive DQN 可穩定地學到一定策略，隨著訓練逐漸收斂，累積獎勵逐步提升，表現尚可接受。
 
-Static mode
+  **Naive DQN in Static mode**
 
-![image](https://github.com/user-attachments/assets/8ab52a2b-edfd-45ae-b9dc-fd84812e106d) 
+  ![image](https://github.com/user-attachments/assets/8ab52a2b-edfd-45ae-b9dc-fd84812e106d) 
 
-Player mode
+  **Naive DQN in Player mode**
 
-![image](https://github.com/user-attachments/assets/3c177642-c9cb-4122-a006-ad1ae780837c) 
+  ![image](https://github.com/user-attachments/assets/3c177642-c9cb-4122-a006-ad1ae780837c) 
 
 
 相較之下，在 **Random 模式**（每次 episode 初始狀態隨機）中，原始 Naive DQN 的訓練表現明顯較差。由於環境條件每次變化，訓練時的狀態分佈更加多樣，原始 DQN 容易陷入震盪，學習曲線波動大且最終平均獎勵低下，無法穩定找到最佳策略。
-![image](https://github.com/user-attachments/assets/50be9bb5-744e-4472-b19c-de1eb24b6201)
+  
+  **Naive DQN in Random mode**
+  
+  ![image](https://github.com/user-attachments/assets/50be9bb5-744e-4472-b19c-de1eb24b6201)
 
 
 將 **經驗回放** 機制加入 Naive DQN 後，在 Random 模式下的學習效果有所改善。由於訓練時使用了多樣化的歷史樣本，樣本間相關性降低，使訓練曲線更加平滑，最終策略也更佳。經驗回放的應用令累積獎勵比原始版本提高，學習過程更加穩定。
-![image](https://github.com/user-attachments/assets/e16a4ce7-3666-4255-ba0d-2abaa7cd6b31)
+
+  **Naive DQN + 經驗回放** 
+  
+  ![image](https://github.com/user-attachments/assets/e16a4ce7-3666-4255-ba0d-2abaa7cd6b31)
 
 
 進一步加入 **目標網絡** 後，Random 模式下 DQN 的表現進一步提升。目標網絡的週期性更新使得訓練目標更穩定，訓練過程中 Q 值估計變化較小，收斂過程更加平緩，最終性能顯著優於僅用經驗回放的情況，並接近 Static 模式的水平。
+
+**Naive DQN + 經驗回放 + 目標網絡**
+
 ![image](https://github.com/user-attachments/assets/cde8e4e9-a858-4132-a344-734090623cf0)
 
 最後加入防止撞墻機制後最終結果收斂得非常好。
+
+**Naive DQN + 經驗回放 + 目標網絡 + 防撞墻機制**
+
 ![image](https://github.com/user-attachments/assets/1ce2b0a4-6416-4930-893e-6cb37d6bc97c)
 
 
